@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- First diagonal line -->
+    <item>
+        <rotate
+            android:fromDegrees="45"
+            android:toDegrees="45"
+            android:pivotX="50%"
+            android:pivotY="50%">
+            <shape android:shape="rectangle">
+                <size
+                    android:width="24dp"
+                    android:height="2dp" /> <!-- Line length and thickness -->
+                <solid android:color="#FFFFFF" /> <!-- White color for the line -->
+            </shape>
+        </rotate>
+    </item>
+
+    <!-- Second diagonal line -->
+    <item>
+        <rotate
+            android:fromDegrees="-45"
+            android:toDegrees="-45"
+            android:pivotX="50%"
+            android:pivotY="50%">
+            <shape android:shape="rectangle">
+                <size
+                    android:width="48dp"
+                    android:height="2dp" /> <!-- Line length and thickness -->
+                <solid android:color="#FFFFFF" /> <!-- White color for the line -->
+            </shape>
+        </rotate>
+    </item>
+</layer-list>
