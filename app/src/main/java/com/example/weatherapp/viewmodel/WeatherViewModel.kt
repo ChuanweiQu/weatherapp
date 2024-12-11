@@ -9,6 +9,7 @@ import androidx.lifecycle.MutableLiveData
 
 import org.json.JSONObject
 import com.example.weatherapp.repository.WeatherRepository
+import com.example.weatherapp.utils.WeatherUtils
 import kotlin.math.log
 
 data class FavRecord(
@@ -51,6 +52,7 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
     private  val _locSuggestions = MutableLiveData<ArrayList<String>>()
     val locSuggestions: LiveData<ArrayList<String>> get() = _locSuggestions
 
+    // location for tabs
     private  val _favoriteLocations = MutableLiveData<ArrayList<FavRecord>>()
     val favoriteLocations: LiveData<ArrayList<FavRecord>> get() = _favoriteLocations
 
@@ -65,7 +67,19 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
                     val respState = arrayResp.getJSONObject(i).getString("state")
                     result.add(FavRecord(_id = respId, city = respCity, state = respState))
                 }
-                _favoriteLocations.value = result
+
+                repository.fetchIpInfo(
+                    onSuccess = { lat, lon, city, state ->
+
+                        val finalTabCities = arrayListOf(FavRecord(city = city, state = WeatherUtils.stateAbb[state]?:""))
+                        finalTabCities.addAll(result)
+                        _favoriteLocations.value = finalTabCities
+                    },
+                    onError = { errorMessage ->
+
+                        _error.value = errorMessage
+                    }
+                )
             },
             onError = { errorMessage ->
                 Log.d("MyInfo", "Fav on Error")
@@ -140,6 +154,17 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
                 _error.value = errorMessage
             }
         )
+    }
+
+    fun addToFavorites(city: String,
+                       state: String,
+                       onSuccess: () -> Unit) {
+        repository.postFavorites(city, state, onSuccess)
+    }
+
+    fun remFromFavorites(recId: String,
+                         onSuccess: () -> Unit) {
+        repository.deleteFavorite(recId, onSuccess)
     }
 
     private fun parseDailyWeather(response: JSONObject) {

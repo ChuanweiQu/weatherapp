@@ -12,6 +12,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -24,9 +25,11 @@ import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.weatherapp.R
+import com.example.weatherapp.repository.WeatherRepository
 import com.example.weatherapp.utils.WeatherUtils
 import com.example.weatherapp.view.adapters.ForecastAdapter
 import com.example.weatherapp.viewmodel.WeatherViewModel
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import org.json.JSONObject
 import kotlin.math.roundToInt
 
@@ -40,7 +43,8 @@ class SearchActivity : AppCompatActivity() {
 
         val backButton: ImageView = findViewById(R.id.exit_search_result)
         backButton.setOnClickListener {
-            finish()
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
         }
 
         val detailAddress = intent.getStringExtra("detailAddress")
@@ -64,6 +68,9 @@ class SearchActivity : AppCompatActivity() {
         val forecastRecyclerView: RecyclerView = findViewById(R.id.forecast_recyclerview)
         val loadingPage: View = findViewById(R.id.loading_page)
         val contentPage: LinearLayout = findViewById(R.id.content_page)
+        val currentWeatherCard: LinearLayout = findViewById(R.id.current_weather_card)
+        val addFavButton: FloatingActionButton = findViewById(R.id.add_fav_button)
+        val remFavButton: FloatingActionButton = findViewById(R.id.rem_fav_button)
 
         forecastRecyclerView.layoutManager = LinearLayoutManager(this)
         forecastAdapter = ForecastAdapter(emptyList())
@@ -78,14 +85,88 @@ class SearchActivity : AppCompatActivity() {
                 windSpeedTextView, visibilityTextView, pressureTextView, weatherSummaryTextView)
         })
 
+        val tabLocs = ArrayList<String>()
+        val recordIds = ArrayList<String>()
+        weatherViewModel.favoriteLocations.observe(this, { favLocs ->
+            for (i in 0 until favLocs.size) {
+                tabLocs.add(favLocs[i].city + ", " + favLocs[i].state)
+                recordIds.add(favLocs[i]._id)
+            }
+            weatherViewModel.loadGeocodingData(detailAddress ?: "")
+        })
+
+        var isInCollections = false
+        var recordId = ""
+        var isCurLoc = false
         weatherViewModel.dailyWeather.observe(this, Observer { dailyWeather ->
             forecastAdapter = ForecastAdapter(dailyWeather)
             forecastRecyclerView.adapter = forecastAdapter
+            if (tabLocs[0].equals(detailAddress)) isCurLoc = true
+            Log.d("MyInfo", tabLocs[0] + " vs " + detailAddress)
+            for (i in 1 until tabLocs.size) {
+                if (tabLocs[i].equals(detailAddress)) {
+                    isInCollections = true
+                    recordId = recordIds[i]
+                    break
+                }
+            }
+            if (isInCollections) {
+                remFavButton.visibility = View.VISIBLE
+                addFavButton.visibility = View.GONE
+            } else if (!isInCollections && !isCurLoc) {
+                remFavButton.visibility = View.GONE
+                addFavButton.visibility = View.VISIBLE
+            } else {
+                remFavButton.visibility = View.GONE
+                addFavButton.visibility = View.GONE
+            }
+
             loadingPage.visibility = View.GONE
             contentPage.visibility = View.VISIBLE
         })
 
-        weatherViewModel.loadGeocodingData(detailAddress ?: "")
+        weatherViewModel.loadFavLocations()
+
+
+        currentWeatherCard.setOnClickListener {
+            val intent = Intent(this, DetailActivity::class.java)
+            val cityName = cityNameTextView.text.toString()
+            val temperature = currentTemperatureTextView.text.toString().replace("°F", "")
+            intent.putExtra("city_name", cityName)
+            intent.putExtra("temperature", temperature)
+            startActivity(intent)
+        }
+
+        addFavButton.setOnClickListener {
+            val searchLocParts = (detailAddress?:"").split(", ")
+            if (searchLocParts.size > 1) {
+                weatherViewModel.addToFavorites(searchLocParts[0],
+                    searchLocParts[1],
+                    onSuccess = {
+                        Toast.makeText(this,
+                            searchLocParts[1] + "was added to favorites",
+                            Toast.LENGTH_SHORT).show()
+                        startActivity(getIntent());
+                    })
+            } else {
+                Log.d("MyInfo", "detailAddress is inappropriate: " + detailAddress)
+            }
+        }
+
+        remFavButton.setOnClickListener {
+            val searchLocParts = (detailAddress?:"").split(", ")
+            if (searchLocParts.size > 1) {
+
+                weatherViewModel.remFromFavorites(recordId, onSuccess = {
+                    Toast.makeText(this,
+                        searchLocParts[1] + "was removed from favorites",
+                        Toast.LENGTH_SHORT).show()
+                    startActivity(getIntent());
+                })
+            } else {
+                Log.d("MyInfo", "detailAddress is inappropriate: " + detailAddress)
+            }
+        }
 
     }
 

@@ -2,6 +2,7 @@ package com.example.weatherapp.view.fragments
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +11,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -19,8 +21,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.weatherapp.R
 import com.example.weatherapp.utils.WeatherUtils
 import com.example.weatherapp.view.activities.DetailActivity
+import com.example.weatherapp.view.activities.MainActivity
 import com.example.weatherapp.view.adapters.ForecastAdapter
 import com.example.weatherapp.viewmodel.WeatherViewModel
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import org.json.JSONObject
 import kotlin.math.roundToInt
 
@@ -47,6 +51,7 @@ class HomeScreen : Fragment() {
         val currentWeatherCard: LinearLayout = view.findViewById(R.id.current_weather_card)
         val loadingPage: View = view.findViewById(R.id.loading_page)
         val contentPage: LinearLayout = view.findViewById(R.id.content_page)
+        val remFavButton: FloatingActionButton = view.findViewById(R.id.rem_fav_button)
 
         forecastRecyclerView.layoutManager = LinearLayoutManager(view.context)
         forecastAdapter = ForecastAdapter(emptyList())
@@ -61,14 +66,44 @@ class HomeScreen : Fragment() {
                 windSpeedTextView, visibilityTextView, pressureTextView, weatherSummaryTextView)
         })
 
+        val tabLocs = ArrayList<String>()
+        val recordIds = ArrayList<String>()
+        weatherViewModel.favoriteLocations.observe(viewLifecycleOwner, { favLocs ->
+            for (i in 0 until favLocs.size) {
+                tabLocs.add(favLocs[i].city + ", " + favLocs[i].state)
+                recordIds.add(favLocs[i]._id)
+            }
+            Log.d("MyInfo", "Got data favLocs")
+            weatherViewModel.loadGeocodingData(locationText ?: "")
+        })
+
+        var recordId = ""
+        var isCurLoc = false
         weatherViewModel.dailyWeather.observe(viewLifecycleOwner, Observer { dailyWeather ->
+            Log.d("MyInfo", "Got data daily weather")
             forecastAdapter = ForecastAdapter(dailyWeather)
             forecastRecyclerView.adapter = forecastAdapter
+            Log.d("MyInfor", tabLocs[0] + "vs" + locationText)
+            if (tabLocs[0].equals(locationText)) isCurLoc = true
+
+            for (i in 1 until tabLocs.size) {
+                if (tabLocs[i].equals(locationText)) {
+                    recordId = recordIds[i]
+                    break
+                }
+            }
+
+            if (!isCurLoc) {
+                remFavButton.visibility = View.VISIBLE
+            } else {
+                remFavButton.visibility = View.GONE
+            }
+
             loadingPage.visibility = View.GONE
             contentPage.visibility = View.VISIBLE
         })
 
-        weatherViewModel.loadGeocodingData(locationText?:"")
+        weatherViewModel.loadFavLocations()
 
         // Set click listener for current_weather_card
         currentWeatherCard.setOnClickListener {
@@ -78,6 +113,22 @@ class HomeScreen : Fragment() {
             intent.putExtra("city_name", cityName)
             intent.putExtra("temperature", temperature)
             startActivity(intent)
+        }
+
+        remFavButton.setOnClickListener {
+            val searchLocParts = (locationText?:"").split(", ")
+            if (searchLocParts.size > 1) {
+
+                weatherViewModel.remFromFavorites(recordId, onSuccess = {
+                    Toast.makeText(context,
+                        searchLocParts[1] + "was removed from favorites",
+                        Toast.LENGTH_SHORT).show()
+                    val intent = Intent(context, MainActivity::class.java)
+                    startActivity(intent)
+                })
+            } else {
+                Log.d("MyInfo", "detailAddress is inappropriate: " + locationText)
+            }
         }
 
         return view

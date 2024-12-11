@@ -10,6 +10,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
@@ -30,7 +31,6 @@ import com.google.android.material.tabs.TabLayoutMediator
 
 class MainActivity : AppCompatActivity() {
     private val weatherViewModel: WeatherViewModel by viewModels()
-    private lateinit var forecastAdapter: ForecastAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -42,8 +42,14 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        val loadingPage: View = findViewById(R.id.loading_page)
+        val contentPage: LinearLayout = findViewById(R.id.content_page)
+
         weatherViewModel.favoriteLocations.observe(this, {favLocations ->
             loadHomeScreen(favLocations)
+            loadingPage.visibility = View.GONE
+            contentPage.visibility = View.VISIBLE
         })
         weatherViewModel.loadFavLocations()
     }

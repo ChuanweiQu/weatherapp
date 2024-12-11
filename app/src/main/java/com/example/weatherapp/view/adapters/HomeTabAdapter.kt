@@ -18,7 +18,7 @@ class HomeTabAdapter (activity: AppCompatActivity, favLocations: ArrayList<FavRe
         val fragment = HomeScreen()
         fragment.arguments = Bundle().apply {
             putString("locationText",
-                _favLocations[position].city + " ," + _favLocations[position].state)
+                _favLocations[position].city + ", " + _favLocations[position].state)
         }
         return fragment
     }

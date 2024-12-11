@@ -4,9 +4,12 @@ import android.util.Log
 import com.example.weatherapp.utils.ApiConstants
 import com.android.volley.Request
 import com.android.volley.RequestQueue
+import com.android.volley.Response
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.example.weatherapp.viewmodel.FavRecord
 import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.math.log
@@ -174,6 +177,69 @@ class WeatherRepository(context: Context) {
         )
 
         requestQueue.add(jsonObjectRequest)
+
+    }
+
+    fun postFavorites(city: String,
+                      state: String,
+                      onSuccess: () -> Unit) {
+
+        fetchFavorites(
+            onSuccess = {arrayResp ->
+                var hasCollected = false
+                for (i in 0 until arrayResp.length()) {
+                    val respCity = arrayResp.getJSONObject(i).getString("city")
+                    val respState = arrayResp.getJSONObject(i).getString("state")
+                    if (respCity.equals(city) && respState.equals(state)) {
+                        hasCollected = true
+                        break
+                    }
+                }
+
+                if (!hasCollected) {
+                    val url = "https://cs571assignment3-441221.uc.r.appspot.com/add_fav"
+                    val jsonBody = JSONObject()
+                    jsonBody.put("city", city)
+                    jsonBody.put("state", state)
+                    jsonBody.put("lat", 0)
+                    jsonBody.put("lng", 0)
+
+                    val postRequest = JsonObjectRequest(Request.Method.POST, url, jsonBody,
+                        { response ->
+                            // Handle the response
+                            Log.d("MyInfo", "Post Fav Response: $response")
+                            onSuccess()
+                        },
+                        { error ->
+                            // Handle error
+                            Log.e("MyInfo", "Post Fav Error: ${error.message}")
+                        }
+                    )
+                    requestQueue.add(postRequest)
+                }
+            },
+            onError = {}
+        )
+
+    }
+
+    fun deleteFavorite (recId: String,
+                        onSuccess: () -> Unit) {
+        val url = "https://cs571assignment3-441221.uc.r.appspot.com/delete_fav/$recId"
+
+        val deleteRequest = StringRequest(Request.Method.DELETE, url,
+            { response ->
+                // Handle the response
+                Log.d("Volley", "Response: $response")
+                onSuccess()
+            },
+            { error ->
+                // Handle error
+                Log.e("Volley", "Error: ${error.message}")
+            }
+        )
+
+        requestQueue.add(deleteRequest)
 
     }
 
