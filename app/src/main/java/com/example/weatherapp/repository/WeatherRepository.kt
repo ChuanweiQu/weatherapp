@@ -22,7 +22,7 @@ class WeatherRepository(context: Context) {
         onSuccess: (latitude: String, longitude: String, city: String, state: String) -> Unit,
         onError: (String) -> Unit
     ) {
-        val url = "${ApiConstants.BASE_URL}/get_IPlocation"
+        val url = "${ApiConstants.BASE_URL}/get_ipToken"
 
         val jsonObjectRequest = JsonObjectRequest(
             Request.Method.GET, url, null,

@@ -71,6 +71,7 @@ class SearchActivity : AppCompatActivity() {
         val currentWeatherCard: LinearLayout = findViewById(R.id.current_weather_card)
         val addFavButton: FloatingActionButton = findViewById(R.id.add_fav_button)
         val remFavButton: FloatingActionButton = findViewById(R.id.rem_fav_button)
+        var temperatureChartOptions = mutableListOf<Triple<Long, Int, Int>>()
 
         forecastRecyclerView.layoutManager = LinearLayoutManager(this)
         forecastAdapter = ForecastAdapter(emptyList())
@@ -101,6 +102,7 @@ class SearchActivity : AppCompatActivity() {
         weatherViewModel.dailyWeather.observe(this, Observer { dailyWeather ->
             forecastAdapter = ForecastAdapter(dailyWeather)
             forecastRecyclerView.adapter = forecastAdapter
+            temperatureChartOptions = forecastAdapter.getTemperatureChartOptions().toMutableList()
             if (tabLocs[0].equals(detailAddress)) isCurLoc = true
             Log.d("MyInfo", tabLocs[0] + " vs " + detailAddress)
             for (i in 1 until tabLocs.size) {
@@ -131,9 +133,22 @@ class SearchActivity : AppCompatActivity() {
         currentWeatherCard.setOnClickListener {
             val intent = Intent(this, DetailActivity::class.java)
             val cityName = cityNameTextView.text.toString()
-            val temperature = currentTemperatureTextView.text.toString().replace("°F", "")
+            val temperature = currentTemperatureTextView.text.toString()
+            val weatherDesc = weatherSummaryTextView.text.toString()
+            val currentWeather = weatherViewModel.currentWeather.value
+            val values = currentWeather?.getJSONObject("values")
             intent.putExtra("city_name", cityName)
             intent.putExtra("temperature", temperature)
+            intent.putExtra("humidity", values?.getInt("humidity"))
+            intent.putExtra("wind_speed", values?.getDouble("windSpeed").toString())
+            intent.putExtra("visibility", values?.getDouble("visibility").toString())
+            intent.putExtra("pressure", values?.getDouble("pressureSeaLevel").toString())
+            intent.putExtra("precipitation", values?.getInt("precipitationProbability"))
+            intent.putExtra("cloud_cover", values?.getInt("cloudCover"))
+            intent.putExtra("ozone", values?.getInt("uvIndex").toString())
+            intent.putExtra("weather_desc", weatherDesc)
+            intent.putExtra("weather_icon", WeatherUtils.getWeatherIcon(values?.getInt("weatherCode") ?: 0))
+            intent.putExtra("temperature_chart_options", ArrayList(temperatureChartOptions))
             startActivity(intent)
         }
 
