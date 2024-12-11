@@ -109,14 +109,17 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
         repository.fetchGeocodingData(
             address = address,
             onSuccess = { lat, lon, formattedAddress ->
+                Log.d("MyInfo", "success to load geocoding")
                 _latitude.value = lat
                 _longitude.value = lon
-                _formattedAddress.value = formattedAddress
+                val locParts = formattedAddress.split(", ")
+                _formattedAddress.value = locParts[0] + ", " + locParts[1]
 
 
                 loadWeatherData(lat, lon)
             },
             onError = { errorMessage ->
+                Log.d("MyInfo", "fail to load geocoding")
                 _error.value = errorMessage
             }
         )
@@ -133,7 +136,7 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
                 parseHourlyWeather(response)
             },
             onError = { errorMessage ->
-
+                Log.d("MyInfo", "fail to load weatherData")
                 _error.value = errorMessage
             }
         )

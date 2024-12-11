@@ -159,7 +159,7 @@ class SearchActivity : AppCompatActivity() {
                     searchLocParts[1],
                     onSuccess = {
                         Toast.makeText(this,
-                            searchLocParts[1] + "was added to favorites",
+                            searchLocParts[0] + " was added to favorites",
                             Toast.LENGTH_SHORT).show()
                         startActivity(getIntent());
                     })
@@ -174,7 +174,7 @@ class SearchActivity : AppCompatActivity() {
 
                 weatherViewModel.remFromFavorites(recordId, onSuccess = {
                     Toast.makeText(this,
-                        searchLocParts[1] + "was removed from favorites",
+                        searchLocParts[0] + " was removed from favorites",
                         Toast.LENGTH_SHORT).show()
                     startActivity(getIntent());
                 })

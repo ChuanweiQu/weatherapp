@@ -136,7 +136,7 @@ class HomeScreen : Fragment() {
 
                 weatherViewModel.remFromFavorites(recordId, onSuccess = {
                     Toast.makeText(context,
-                        searchLocParts[1] + "was removed from favorites",
+                        searchLocParts[0] + " was removed from favorites",
                         Toast.LENGTH_SHORT).show()
                     val intent = Intent(context, MainActivity::class.java)
                     startActivity(intent)

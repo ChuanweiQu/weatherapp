@@ -101,6 +101,7 @@ class WeatherRepository(context: Context) {
         onError: (String) -> Unit
     ) {
         val url = "${ApiConstants.BASE_URL}/get_weather?latitude=$lat&longitude=$lon"
+        Log.d("MyInfo", "weather data url: \n" + url)
 
         val jsonObjectRequest = JsonObjectRequest(
             Request.Method.GET, url, null,
