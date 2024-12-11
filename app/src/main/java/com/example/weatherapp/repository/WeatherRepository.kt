@@ -9,6 +9,7 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import org.json.JSONArray
 import org.json.JSONObject
+import kotlin.math.log
 
 
 class WeatherRepository(context: Context) {
@@ -143,11 +144,37 @@ class WeatherRepository(context: Context) {
                 }
             },
             { error ->
-                onError(error.message ?: "Error fetching Geocoding data")
+                onError(error.message ?: "Error fetching suggestions")
             }
         )
 
         requestQueue.add(jsonObjectRequest)
+    }
+
+    fun fetchFavorites(
+        onSuccess: (JSONArray) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val url = "https://cs571assignment3-441221.uc.r.appspot.com/get_all_favs"
+        Log.d("MyInfo", "after url")
+
+        val jsonObjectRequest = JsonArrayRequest(
+            Request.Method.GET, url, null,
+            { response ->
+                try {
+                    onSuccess(response)
+                } catch (e: Exception) {
+                    onError("Error fetching favorites: ${e.message}")
+                }
+            },
+            { error ->
+                Log.d("MyInfo", "Fav Error")
+                onError(error.message ?: "Error fetching favorites")
+            }
+        )
+
+        requestQueue.add(jsonObjectRequest)
+
     }
 
 }

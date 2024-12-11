@@ -11,6 +11,13 @@ import org.json.JSONObject
 import com.example.weatherapp.repository.WeatherRepository
 import kotlin.math.log
 
+data class FavRecord(
+    val _id: String = "",
+    val city: String  = "",
+    val state: String  = "",
+    val lat: Double = 0.0,
+    val lng: Double = 0.0
+)
 
 class WeatherViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -44,6 +51,29 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
     private  val _locSuggestions = MutableLiveData<ArrayList<String>>()
     val locSuggestions: LiveData<ArrayList<String>> get() = _locSuggestions
 
+    private  val _favoriteLocations = MutableLiveData<ArrayList<FavRecord>>()
+    val favoriteLocations: LiveData<ArrayList<FavRecord>> get() = _favoriteLocations
+
+    fun loadFavLocations() {
+        repository.fetchFavorites(
+            onSuccess = { arrayResp ->
+                Log.d("MyInfo", "Fav success")
+                val result = ArrayList<FavRecord>()
+                for (i in 0 until arrayResp.length()) {
+                    val respId = arrayResp.getJSONObject(i).getString("_id")
+                    val respCity = arrayResp.getJSONObject(i).getString("city")
+                    val respState = arrayResp.getJSONObject(i).getString("state")
+                    result.add(FavRecord(_id = respId, city = respCity, state = respState))
+                }
+                _favoriteLocations.value = result
+            },
+            onError = { errorMessage ->
+                Log.d("MyInfo", "Fav on Error")
+                _error.value = errorMessage
+            }
+        )
+    }
+
     fun loadLocSuggestions(address: String) {
         if(address != "") {
             repository.fetchCitySuggestions(
@@ -65,7 +95,6 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
         repository.fetchGeocodingData(
             address = address,
             onSuccess = { lat, lon, formattedAddress ->
-
                 _latitude.value = lat
                 _longitude.value = lon
                 _formattedAddress.value = formattedAddress
@@ -74,7 +103,6 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
                 loadWeatherData(lat, lon)
             },
             onError = { errorMessage ->
-
                 _error.value = errorMessage
             }
         )
@@ -86,7 +114,6 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
             lat = lat,
             lon = lon,
             onSuccess = { response ->
-
                 _weatherData.value = response
                 parseDailyWeather(response)
                 parseHourlyWeather(response)
